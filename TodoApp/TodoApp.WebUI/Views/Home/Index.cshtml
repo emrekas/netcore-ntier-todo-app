@@ -1,0 +1,168 @@
+﻿@model IEnumerable<TodoApp.DTO.TaskDto>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <h1>Todos</h1>
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTaskModal">
+            Create New Task
+        </button>
+        <hr>
+        <ul id="sortable" class="list-group">
+            @foreach (var taskDto in Model)
+            {
+                <li class="list-group-item" id="taskDtoItem-@taskDto.Id">
+                    <div class="row">
+                        <div class="col-md-10">
+                            <div class="w-100 justify-content-between">
+                                @Html.Hidden("taskId", taskDto.Id)
+                                <h5 id="taskName-@taskDto.Id" class="mb-1">@taskDto.Name</h5>
+                                <p id="taskDescription-@taskDto.Id" class="mb-1">@taskDto.Description</p>
+                                @Html.Hidden("taskBeginDate-" + taskDto.Id, taskDto.BeginDate)
+                                <small id="taskEndDate-@taskDto.Id" class="text-muted">@taskDto.EndDate.ToString("G")</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="editTask(this);" value="@taskDto.Id" data-toggle="modal" data-target="#editTaskModal">✏</button>
+                            <button class="mt-3" value="@taskDto.Id" onclick="deleteTask(this);">❌</button>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+
+    </div>
+</div>
+
+<!-- AddTask Modal -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" role="dialog" aria-labelledby="addTaskModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTaskModalTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm("AddTask", "Home", null, FormMethod.Post))
+            {
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input class="form-control" name="Name" type="text" placeholder="Name">
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-6">
+                            <div class="form-group">
+                                <label>Begin Date</label>
+                                <input type="datetime-local" name="BeginDate" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group col-6">
+                            <div class="form-group">
+                                <label>Begin Date</label>
+                                <input type="datetime-local" name="EndDate" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescription">Example textarea</label>
+                        <textarea class="form-control" name="Description" id="taskDescription" rows="3"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" id="addTask" class="btn btn-primary">Save changes</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- UpdateTask Modal -->
+<div class="modal fade" id="editTaskModal" tabindex="-1" role="dialog" aria-labelledby="editTaskModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTaskModalTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm("UpdateTask", "Home", null, FormMethod.Post))
+            {
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="editTaskFormId" value="" />
+                    <div class="form-group">
+                        <input class="form-control" id="editTaskFormName" name="Name" type="text" placeholder="Name">
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-6">
+                            <div class="form-group">
+                                <label>Begin Date</label>
+                                <input type="datetime-local" id="editTaskFormBeginDate" name="BeginDate" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group col-6">
+                            <div class="form-group">
+                                <label>End Date</label>
+                                <input type="datetime-local" id="editTaskFormEndDate" name="EndDate" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTaskFormDescription">Example textarea</label>
+                        <textarea class="form-control" name="Description" id="editTaskFormDescription" rows="3"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" id="updateTask" class="btn btn-primary">Save changes</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function editTask(e) {
+            let taskId = $(e).val();
+
+            let beginDate = new Date(Date.parse($("#taskBeginDate-" + taskId).val())).toISOString();
+            beginDate = beginDate.substring(0, beginDate.length - 1);
+
+            let endDate = new Date(Date.parse($("#taskEndDate-" + taskId).text())).toISOString();
+            endDate = endDate.substring(0, endDate.length - 1);
+
+            $("#editTaskFormId").val(taskId);
+            $("#editTaskFormName").val($("#taskName-" + taskId).text());
+            $("#editTaskFormDescription").val($("#taskDescription-" + taskId).text());
+            $("#editTaskFormBeginDate").val(beginDate);
+            $("#editTaskFormEndDate").val(endDate);
+        }
+
+        function deleteTask(e) {
+            let taskId = $(e).val();
+            $.post("@Url.ActionLink("DeleteTask", "Home")", { id: taskId})
+                .done((data) => {
+                    if (data === 1) {
+                        $("#taskDtoItem-" + taskId).remove();
+                    }
+                });
+        };
+
+        //Tam saati kontrol etmek zor olacağı için her 1 dakikada bitiş tarihlerini kontrol edip alert verdim. Bir dakika gecikmeyle istediğimiz amaca ulaşabiliyoruz.
+        setInterval(function () {
+            let dates = document.getElementById("sortable").getElementsByTagName("small");
+
+            Array.from(dates).forEach(i => {
+                if (Date.parse($(i).text()) < Date.now()) {
+                    alert($(i).text() + " tarihinde bitmesi gereken bir iş vardı.");
+                }
+            })},60000);
+    </script>
+
+}
